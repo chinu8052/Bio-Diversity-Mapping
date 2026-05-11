@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Biodiversity – Explore Nature Together</title>
+    <meta name="description" content="Landing page for Biodiversity: learn, explore, and jump into contributing and analyzing local biodiversity." />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="manifest" href="/manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body id="top">
+    
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand__logo" aria-hidden="true"><i class="fa-solid fa-leaf"></i></span>
+          <span class="brand__name text-color">Biodiversity</span>
+        </div>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#mapping">Mapping</a>
+          <a href="#education">Education Resource</a>
+          <a href="#trends">Trend Analysis</a>
+          <a href="#admin" hidden>Admin</a>
+          <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+            <i class="fa-solid fa-sun" aria-hidden="true"></i>
+          </button>
+
+          <button id="logoutBtn" class="button button--secondary" hidden>
+            <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
+            <span>Logout</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" data-route="home">
+        <div class="container">
+          <h1>Track local biodiversity together</h1>
+          <p>
+            Submit wildlife and plant sightings. Explore trends with live stats
+            and charts—all on your device.
+          </p>
+          <div class="hero-cta">
+            <a class="button" href="#contribute">Add a sighting</a>
+            <a class="button button--secondary" href="#analysis">View analysis</a>
+          </div>
+        </div>
+      </section>
+      <section class="section" data-route="home">
+        <div class="container">
+          <div class="card">
+            <h2>What is <span class="text-leaf-color">Biodiversity</span>?</h2>
+            <p><span class="text-leaf-color">Biodiversity</span> is a community tool to log wildlife and plant sightings and explore local <span class="text-leaf-color">biodiversity</span> trends. An account is required to contribute or view analysis.</p>
+            
+          </div>
+        </div>
+      </section>
+
+      <section id="auth" class="section" data-route="auth" hidden>
+        <div class="container">
+          <div class="card" style="max-width:720px;margin:0 auto;">
+            <h2>Account</h2>
+            <div id="authState" style="margin-bottom:12px;color:var(--muted);"></div>
+            <div class="tabs">
+              <button class="tab-link" id="tabLogin" data-tab="login" aria-selected="true">Login</button>
+              <button class="tab-link" id="tabRegister" data-tab="register">Register</button>
+            </div>
+            <div class="tab-panels">
+              <div class="tab-panel" data-tab="login">
+                <form id="loginForm" class="form">
+                  <div class="form-row">
+                    <label for="loginEmail">Email</label>
+                    <input id="loginEmail" type="email" required placeholder="user@example.com" />
+                  </div>
+                  <div class="form-row">
+                    <label for="loginPassword">Password</label>
+                    <div class="password-container">
+                      <input id="loginPassword" type="password" required placeholder="••••••" />
+                      <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</button>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="button">Login</button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="tab-panel" data-tab="register" hidden>
+                <form id="registerForm" class="form">
+                  <div class="form-row">
+                    <label for="regName">Name</label>
+                    <input id="regName" type="text" placeholder="Full Name" />
+                  </div>
+                  <div class="form-row">
+                    <label for="regEmail">Email</label>
+                    <input id="regEmail" type="email" required placeholder="user@example.com" />
+                  </div>
+                  <div class="form-row">
+                    <label for="regPassword">Password</label>
+                    <div class="password-container">
+                      <input id="regPassword" type="password" required placeholder="min 6 characters" />
+                      <button type="button" class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</button>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="button">Create account</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
+      <section id="admin" class="section" data-route="admin" hidden>
+        <div class="container">
+          <div class="card">
+            <h2>Admin panel</h2>
+            <p id="adminGuard" class="sighting__meta">Admin-only area. You must be logged in as an admin.</p>
+            <div class="list-header" style="margin-top:12px;">
+              <h3>Users</h3>
+              <div class="list-tools">
+                <button id="addUserBtn" class="button"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                <button id="refreshUsersBtn" class="button button--secondary"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>
+              </div>
+            </div>
+            <div id="usersTableWrap" class="card" style="margin-top:10px; overflow:auto;">
+              <table id="usersTable" style="width:100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Email</th>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Name</th>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Admin</th>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Created</th>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Contribute</th>
+                    <th style="text-align:left; padding:8px; border-bottom:1px solid var(--border);">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTbody"></tbody>
+              </table>
+            </div>
+
+            <div id="addUserFormWrap" class="card" style="margin-top:20px;" hidden>
+              <h3>Add New User</h3>
+              <form id="addUserForm" class="form">
+                <div class="form-row">
+                  <label for="addUserName">Name</label>
+                  <input id="addUserName" type="text" placeholder="Jane Doe" />
+                </div>
+                <div class="form-row">
+                  <label for="addUserEmail">Email</label>
+                  <input id="addUserEmail" type="email" required placeholder="user@example.com" />
+                </div>
+                <div class="form-row">
+                  <label for="addUserPassword">Password</label>
+                  <div class="password-container">
+                    <input id="addUserPassword" type="password" required placeholder="min 6 characters" />
+                    <button type="button" class="password-toggle" onclick="togglePassword('addUserPassword', this)">👁️</button>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label class="toggle">
+                    <input type="checkbox" id="addUserIsAdmin" />
+                    <span>Is Admin</span>
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="button">Create User</button>
+                  <button type="button" id="cancelAddUserBtn" class="button button--secondary">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
+        </div>
+      </section>
+
+      <section id="about" class="section" data-route="about" hidden>
+        <div class="container">
+          <div class="card">
+            <h2>About <span class="text-leaf-color">Biodiversity</span></h2>
+            <p><span class="text-leaf-color">Biodiversity</span> is a community-driven platform designed to help users track and explore local wildlife and plant sightings. It promotes environmental awareness and community science by making it easy to contribute observations and analyze biodiversity trends.</p>
+            <h3>What You Can Do:</h3>
+            <ul>
+              <li><strong>Log Your Discoveries:</strong> Add your own wildlife and plant sightings to our growing database.</li>
+              <li><strong>Explore Local Trends:</strong> Use our interactive charts and stats to see what's happening in your area.</li>
+              <li><strong>Contribute to Science:</strong> Your observations can help researchers and conservationists in their work.</li>
+              <li><strong>Connect with Nature:</strong> Become more aware of the biodiversity in your own backyard.</li>
+            </ul>
+            <p>This platform is designed to foster a deeper connection with the natural world around us. By contributing your observations, you help build a valuable dataset that can be used for:</p>
+            <ul>
+              <li><strong>Environmental Research:</strong> Providing data for scientists and researchers studying local ecosystems.</li>
+              <li><strong>Conservation Efforts:</strong> Identifying trends and areas of concern for conservation organizations.</li>
+              <li><strong>Educational Purposes:</strong> Learning about local flora and fauna and engaging with the community.</li>
+              <li><strong>Personal Tracking:</strong> Keeping a personal record of your nature observations.</li>
+            </ul>
+            <p>Join us in exploring and protecting the rich biodiversity of our planet!</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="mapping" class="section" data-route="mapping" hidden>
+        <div class="container">
+          <div class="card">
+            <h2>Sighting Map</h2>
+            <p>Explore the geographic distribution of sightings. The map below shows the locations of observations submitted by our community.</p>
+            <div id="map" style="height: 400px; border-radius: 8px; margin-top: 16px; width: 100%;"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="education" class="section" data-route="education" hidden>
+        <div class="container">
+          <div class="card">
+            <h2>Education Resources</h2>
+            <p>Expand your knowledge about biodiversity and conservation with these valuable resources.</p>
+            <ul>
+              <li><a href="https://www.worldwildlife.org/initiatives/biodiversity" target="_blank" rel="noopener noreferrer">WWF: Biodiversity</a> - Learn about the importance of biodiversity and WWF's conservation efforts.</li>
+              <li><a href="https://www.nationalgeographic.org/encyclopedia/biodiversity/" target="_blank" rel="noopener noreferrer">National Geographic: Biodiversity</a> - An encyclopedia entry explaining biodiversity.</li>
+              <li><a href="https://www.conservation.org/biodiversity" target="_blank" rel="noopener noreferrer">Conservation International: Biodiversity</a> - Discover how biodiversity supports all life on Earth.</li>
+              <li><a href="https://www.researchgate.net/publication/383851693_Understanding_Biodiversity_Mapping_of_School_Relating_to_Types_of_Plant_and_Animal_Species_and_Ecological_Roles" target="_blank" rel="noopener noreferrer">Understanding biodiversity mapping related to types of plants and animal species</a> - A research paper on biodiversity mapping in schools.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="trends" class="section" data-route="trends" hidden>
+        <div class="container">
+          <div class="card">
+
+            <div class="charts-horizontal" style="display: flex; gap: 20px; justify-content: space-around; flex-wrap: wrap;">
+              <div class="chart-container" style="max-width: 300px; flex: 1; min-width: 250px;">
+                <h2>Percentage of Taxonomic Groups</h2>
+                <canvas id="taxonomicGroupChart"></canvas>
+              </div>
+
+              <div class="chart-container" style="max-width: 300px; flex: 1; min-width: 250px;">
+                <h2>Endangered vs Non-Endangered Species</h2>
+                <canvas id="endangeredChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <h2>Biodiversity Trends Over the Years</h2>
+              <canvas id="biodiversityTrendChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+              <h2>New Species Discovery Over the Last 10 Years</h2>
+              <canvas id="newSpeciesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contribute" class="section" data-route="contribute">
+        <div class="container">
+          <h2>Contribute a sighting</h2>
+          <form id="sightingForm" class="card form" autocomplete="on">
+            <div class="form-row">
+              <label for="species">Species name</label>
+              <input id="species" name="species" type="text" placeholder="e.g., Monarch Butterfly" required />
+            </div>
+            <div class="form-row">
+              <label for="category">Category</label>
+              <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option>Mammal</option>
+                <option>Bird</option>
+                <option>Reptile</option>
+                <option>Amphibian</option>
+                <option>Fish</option>
+                <option>Insect</option>
+                <option>Plant</option>
+                <option>Fungi</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="count">Count</label>
+                <input id="count" name="count" type="number" min="1" step="1" placeholder="1" required />
+              </div>
+              <div class="form-row">
+                <label for="date">Date</label>
+                <input id="date" name="date" type="date" required readonly />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="location">Location</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input id="location" name="location" type="text" placeholder="e.g., Riverside Park, NYC" style="flex: 1;" />
+                <button type="button" id="autoLocationBtn" class="button" style="white-space: nowrap; padding: 8px 12px;">Auto</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="photoUrl">Photo URL (optional)</label>
+              <input id="photoUrl" name="photoUrl" type="url" placeholder="https://..." />
+            </div>
+            <div class="form-row">
+              <label for="notes">Notes (optional)</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="Behavior, habitat, weather..."></textarea>
+            </div>
+            <input type="hidden" id="editId" name="editId" />
+            <div class="form-actions">
+              <button type="submit" class="button">Save sighting</button>
+              <button type="button" id="resetFormBtn" class="button button--secondary">Reset form</button>
+            </div>
+          </form>
+
+          <details class="card import-export">
+            <summary>Import/Export data</summary>
+            <div class="import-export__row">
+              <button id="exportBtn" class="button">Export JSON</button>
+              <label class="import-file-label">
+                <input id="importFile" type="file" accept="application/json" />
+                <span class="button button--secondary">Import JSON</span>
+              </label>
+              <button id="seedBtn" class="button button--secondary">Load sample data</button>
+              <button id="clearBtn" class="button button--danger">Clear all data</button>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="analysis" class="section section--muted" data-route="analysis">
+        <div class="container">
+          <h2>Analysis</h2>
+          <div class="stats-grid">
+            <div class="stat card">
+              <div class="stat__value" id="statTotalSightings">0</div>
+              <div class="stat__label">Total sightings</div>
+            </div>
+            <div class="stat card">
+              <div class="stat__value" id="statDistinctSpecies">0</div>
+              <div class="stat__label">Distinct species</div>
+            </div>
+            <div class="stat card">
+              <div class="stat__value" id="statTotalIndividuals">0</div>
+              <div class="stat__label">Total individuals counted</div>
+            </div>
+            <div class="stat card">
+              <div class="stat__value" id="statTopCategory">—</div>
+              <div class="stat__label">Top category</div>
+            </div>
+          </div>
+
+          <div class="card chart-card" style="margin-top:14px;">
+            <div class="chart-card__header">
+              <h3 class="chart-card__title">Sightings by category</h3>
+              <div class="chart-card__tools">
+                <label class="toggle">
+                  <input type="checkbox" id="chartModeToggle" />
+                  <span>Show individuals instead of sightings</span>
+                </label>
+                <select id="chartTypeSelect" aria-label="Chart type">
+                  <option value="bar">Bar</option>
+                  <option value="hbar">Horizontal bar</option>
+                  <option value="pie">Pie</option>
+                  <option value="donut">Donut</option>
+                </select>
+              </div>
+            </div>
+            <canvas id="categoryChart" height="240" aria-label="Bar chart of sightings by category" role="img"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="sightings" class="section" data-route="contribute">
+        <div class="container">
+          <div class="list-header">
+            <h2>Sightings</h2>
+            <div class="list-tools">
+              <input type="search" id="searchInput" placeholder="Search species or location" />
+              <select id="filterCategory">
+                <option value="">All categories</option>
+                <option>Mammal</option>
+                <option>Bird</option>
+                <option>Reptile</option>
+                <option>Amphibian</option>
+                <option>Fish</option>
+                <option>Insect</option>
+                <option>Plant</option>
+                <option>Fungi</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div id="sightingsList" class="sightings-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© 2025 <span class="text-leaf-color">Biodiversity</span></p>
+      </div>
+    </footer>
+
+    <!-- Chat floating button and panel -->
+    <button id="chatFab" class="chat-fab" aria-label="Open biodiversity chat"><i class="fa-solid fa-comments" aria-hidden="true"></i></button>
+    <div id="chatPanel" class="chat-panel" hidden>
+      <div class="card chat-card">
+        <div class="chat-header">
+          <h3 class="chat-title">Ask a <span class="text-leaf-color">biodiversity</span> expert</h3>
+          <button id="chatCloseBtn" class="button button--secondary" style="padding:4px 8px;">×</button>
+        </div>
+        <div id="chatBody" class="chat-body" aria-live="polite"></div>
+        <div class="chat-input">
+          <input id="chatInput" type="text" placeholder="Ask about species, habitats, conservation..." />
+          <button id="chatSendBtn" class="button">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="script.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('Service Worker registered: ', registration);
+            })
+            .catch(error => {
+              console.log('Service Worker registration failed: ', error);
+            });
+        });
+      }
+    </script>
+    <script>
+      // 1️⃣ Percentage of Taxonomic Groups (Pie Chart)
+      const ctxTaxonomic = document.getElementById('taxonomicGroupChart').getContext('2d');
+      const taxonomicGroupChart = new Chart(ctxTaxonomic, {
+        type: 'pie',
+        data: {
+          labels: ['Mammals', 'Birds', 'Reptiles', 'Amphibians', 'Fish', 'Insects', 'Plants'],
+          datasets: [{
+            label: 'Percentage of Species',
+            data: [12, 25, 8, 5, 10, 30, 10],
+            backgroundColor: [
+              '#2b5d34','#4caf50','#ff9800','#ff5722','#03a9f4','#9c27b0','#cddc39'
+            ]
+          }]
+        },
+        options: {
+          responsive: true
+        }
+      });
+
+      // 2️⃣ Endangered vs Non-Endangered (Doughnut Chart)
+      const ctxEndangered = document.getElementById('endangeredChart').getContext('2d');
+      const endangeredChart = new Chart(ctxEndangered, {
+        type: 'doughnut',
+        data: {
+          labels: ['Endangered', 'Vulnerable', 'Near Threatened', 'Least Concern'],
+          datasets: [{
+            data: [1200, 1500, 800, 4500],
+            backgroundColor: ['#ff5722','#ff9800','#ffc107','#4caf50']
+          }]
+        },
+        options: {
+          responsive: true
+        }
+      });
+
+      // 3️⃣ Biodiversity Trends Over the Years (Line Chart)
+      const ctxTrend = document.getElementById('biodiversityTrendChart').getContext('2d');
+      const biodiversityTrendChart = new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: ['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
+          datasets: [
+            {
+              label: 'Species Observed',
+              data: [4200, 4300, 4400, 4500, 4600, 4700, 4800, 4900, 5000, 5100],
+              borderColor: '#2b5d34',
+              backgroundColor: 'rgba(43,93,52,0.2)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Endangered Species Observed',
+              data: [900, 950, 980, 1000, 1020, 1050, 1080, 1100, 1120, 1150],
+              borderColor: '#ff5722',
+              backgroundColor: 'rgba(255,87,34,0.2)',
+              fill: true,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // 4️⃣ New Species Discovery Over the Last 10 Years (Bar Chart)
+      const ctxNewSpecies = document.getElementById('newSpeciesChart').getContext('2d');
+      const newSpeciesChart = new Chart(ctxNewSpecies, {
+        type: 'bar',
+        data: {
+          labels: ['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
+          datasets: [{
+            label: 'New Species Discovered',
+            data: [45, 50, 40, 60, 55, 70, 65, 80, 75, 90],
+            backgroundColor: '#03a9f4'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
